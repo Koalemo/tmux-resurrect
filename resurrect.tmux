@@ -30,7 +30,7 @@ set_restore_session_bindings() {
   tmux bind-key C-j display-popup -E "\
       /bin/cat $TMUX_HOME/resurrect/saved_sessions.tmux |\
       awk '{print \$2}' |\
-      awk '!/^([0-9]|loca\/bin)/' |\
+      awk '!/^([0-9]$|loca\/bin)/' |\
       uniq |\
       sort -u |\
       fzf --reverse --header jump-to-session |\
