@@ -27,7 +27,7 @@ set_save_current_session_bindings() {
 }
 
 set_restore_session_bindings() {
-  tmux bind-key C-j display-popup -E "\
+  tmux bind-key C-r display-popup -E "\
       /bin/cat $TMUX_HOME/resurrect/saved_sessions.tmux |\
       awk '{print \$2}' |\
       awk '!/^([0-9]$|loca\/bin)/' |\
@@ -36,7 +36,6 @@ set_restore_session_bindings() {
       fzf --reverse --header jump-to-session |\
       xargs -I % tmux run-shell '$CURRENT_DIR/scripts/restore-session.sh %'"
 }
-
 
 set_default_strategies() {
 	tmux set-option -gq "${restore_process_strategy_option}irb" "default_strategy"
