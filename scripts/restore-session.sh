@@ -6,7 +6,6 @@ source "$CURRENT_DIR/variables.sh"
 source "$CURRENT_DIR/helpers.sh"
 source "$CURRENT_DIR/process_restore_helpers.sh"
 source "$CURRENT_DIR/spinner_helpers.sh"
-source "$CURRENT_DIR/common-scripts-variables.sh"
 
 # delimiter
 d=$'\t'
@@ -26,9 +25,6 @@ usage() {
     echo "Restores a specific tmux session from the last saved resurrect file."
     exit 1
 }
-
-# Target file for saving the session
-SAVED_SESSIONS_FILE="$TMUX_HOME/resurrect/saved_sessions.tmux"
 
 # Check if session name parameter was provided
 if [ $# -ne 1 ]; then
@@ -50,7 +46,7 @@ last_resurrect_saved_sessions() {
 
 
 check_saved_session_exists() {
-    local resurrect_file="$(SAVED_SESSIONS_FILE)"
+    local resurrect_file="$(last_resurrect_saved_sessions)"
     if [ ! -f $resurrect_file ]; then
         display_message "Tmux resurrect file not found!"
         return 1
@@ -58,7 +54,7 @@ check_saved_session_exists() {
 }
 
 check_target_session_exists_in_resurrect_file() {
-    local resurrect_file="$(SAVED_SESSIONS_FILE)"
+    local resurrect_file="$(last_resurrect_saved_sessions)"
     local session_exists=$(grep -c "^pane	$TARGET_SESSION	" "$resurrect_file")
 
     if [ "$session_exists" -eq 0 ]; then
@@ -233,7 +229,7 @@ restore_pane() {
 
 restore_window_properties() {
     local window_name
-    \grep "^window	$TARGET_SESSION" $(SAVED_SESSIONS_FILE) |
+    \grep "^window	$TARGET_SESSION" $(last_resurrect_saved_sessions) |
         while IFS=$d read line_type session_name window_number window_name window_active window_flags window_layout automatic_rename; do
             tmux select-layout -t "${session_name}:${window_number}" "$window_layout"
 
@@ -251,7 +247,7 @@ restore_window_properties() {
 restore_pane_processes() {
     if restore_pane_processes_enabled; then
         local pane_full_command
-        awk -v target="$TARGET_SESSION" 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $2 == target && $11 !~ "^:$" { print $2, $3, $6, $8, $11; }' $(SAVED_SESSIONS_FILE) |
+        awk -v target="$TARGET_SESSION" 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $2 == target && $11 !~ "^:$" { print $2, $3, $6, $8, $11; }' $(last_resurrect_saved_sessions) |
             while IFS=$d read -r session_name window_number pane_index dir pane_full_command; do
                 dir="$(remove_first_char "$dir")"
                 pane_full_command="$(remove_first_char "$pane_full_command")"
@@ -261,7 +257,7 @@ restore_pane_processes() {
 }
 
 restore_active_pane_for_each_window() {
-    awk -v target="$TARGET_SESSION" 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $2 == target && $9 == 1 { print $2, $3, $6; }' $(SAVED_SESSIONS_FILE) |
+    awk -v target="$TARGET_SESSION" 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $2 == target && $9 == 1 { print $2, $3, $6; }' $(last_resurrect_saved_sessions) |
         while IFS=$d read session_name window_number active_pane; do
             tmux switch-client -t "${session_name}:${window_number}"
             tmux select-pane -t "$active_pane"
@@ -269,14 +265,14 @@ restore_active_pane_for_each_window() {
 }
 
 restore_zoomed_windows() {
-    awk -v target="$TARGET_SESSION" 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $2 == target && $5 ~ /Z/ && $9 == 1 { print $2, $3; }' $(SAVED_SESSIONS_FILE) |
+    awk -v target="$TARGET_SESSION" 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $2 == target && $5 ~ /Z/ && $9 == 1 { print $2, $3; }' $(last_resurrect_saved_sessions) |
         while IFS=$d read session_name window_number; do
             tmux resize-pane -t "${session_name}:${window_number}" -Z
         done
 }
 
 restore_active_window() {
-    awk -v target="$TARGET_SESSION" 'BEGIN { FS="\t"; OFS="\t" } /^window/ && $2 == target && $5 == 1 { print $2, $3; }' $(SAVED_SESSIONS_FILE) |
+    awk -v target="$TARGET_SESSION" 'BEGIN { FS="\t"; OFS="\t" } /^window/ && $2 == target && $5 == 1 { print $2, $3; }' $(last_resurrect_saved_sessions) |
         while IFS=$d read session_name window_number; do
             tmux switch-client -t "${session_name}:${window_number}"
         done
@@ -308,7 +304,7 @@ restore_session() {
         if is_line_type "pane" "$line"; then
             restore_pane "$line"
         fi
-    done < $(SAVED_SESSIONS_FILE)
+    done < $(last_resurrect_saved_sessions)
 }
 
 cleanup_restored_pane_contents() {
