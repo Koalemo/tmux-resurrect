@@ -323,10 +323,6 @@ main() {
     fi
 
     if supported_tmux_version_ok && check_saved_session_exists && check_target_session_exists_in_resurrect_file; then
-        start_spinner "Restoring session '$TARGET_SESSION'..." "Session '$TARGET_SESSION' restored!"
-
-        # Hook before restoration
-        execute_hook "pre-restore-all"
 
         # First check for existing session
         if session_exists "$TARGET_SESSION"; then
@@ -334,6 +330,12 @@ main() {
             display_message "Session '$TARGET_SESSION' exists! Exiting..."
             exit 1
         fi
+
+        start_spinner "Restoring session '$TARGET_SESSION'..." "Session '$TARGET_SESSION' restored!"
+
+        # Hook before restoration
+        execute_hook "pre-restore-all"
+
 
         # Restore the session
         restore_session
