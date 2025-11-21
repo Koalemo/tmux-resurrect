@@ -37,6 +37,17 @@ set_restore_session_bindings() {
       xargs -I % tmux run-shell '$CURRENT_DIR/scripts/restore-session.sh %'"
 }
 
+set_remove_session_bindings() {
+  tmux bind-key C-d display-popup -E "\
+      /bin/cat $TMUX_HOME/resurrect/saved_sessions.tmux |\
+      awk '{print \$2}' |\
+      awk '!/^([0-9]$|loca\/bin)/' |\
+      uniq |\
+      sort -u |\
+      fzf --reverse --header remove-session |\
+      xargs -I % tmux run-shell '$CURRENT_DIR/scripts/remove-session.sh %'"
+}
+
 set_default_strategies() {
 	tmux set-option -gq "${restore_process_strategy_option}irb" "default_strategy"
 	tmux set-option -gq "${restore_process_strategy_option}mosh-client" "default_strategy"
@@ -52,6 +63,7 @@ main() {
   set_save_current_session_bindings
 	set_restore_bindings
   set_restore_session_bindings
+  set_remove_session_bindings
 	set_default_strategies
 	set_script_path_options
 }
