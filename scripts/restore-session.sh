@@ -328,8 +328,12 @@ main() {
         # Hook before restoration
         execute_hook "pre-restore-all"
 
-        # First remove the existing session if it exists
-        remove_existing_session
+        # First check for existing session
+        if session_exists "$TARGET_SESSION"; then
+            stop_spinner
+            display_message "Session '$TARGET_SESSION' exists! Exiting..."
+            exit 1
+        fi
 
         # Restore the session
         restore_session
