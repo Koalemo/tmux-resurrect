@@ -27,7 +27,7 @@ set_save_current_session_bindings() {
 }
 
 set_restore_session_bindings() {
-  tmux bind-key C-r display-popup -E "\
+  tmux bind-key C-j display-popup -E "\
       /bin/cat $TMUX_HOME/resurrect/saved_sessions.tmux |\
       awk '{print \$2}' |\
       awk '!/^([0-9]$|loca\/bin)/' |\
