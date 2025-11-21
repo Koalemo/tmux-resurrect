@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -x
+
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 source "$CURRENT_DIR/variables.sh"
@@ -348,12 +350,6 @@ main() {
         # Hook after restoration
         execute_hook "post-restore-all"
 
-
-        for session in $(tmux list-sessions -F '#{session_name}'); do
-            if [ "$session" != "$TARGET_SESSION" ]; then
-              tmux kill-session -t "$session"
-            fi
-        done
         stop_spinner
         display_message "Session '$TARGET_SESSION' restored!"
     fi
